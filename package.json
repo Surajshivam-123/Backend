@@ -1,0 +1,19 @@
+{
+  "name": "backend-tea",
+  "version": "1.0.0",
+  "description": "backend by suraj",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "node",
+    "tea"
+  ],
+  "author": "Suraj Kumar",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0"
+  }
+}
