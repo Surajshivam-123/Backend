@@ -4,7 +4,7 @@ const express = require('express')
 const app = express()
 const port = 3000
 
-app.get('/', (req, res) => {
+app.get('/', (req, res) => {//four arguments(err,req,res,next)
   res.send('Hello World!')
 })
 app.get('/twitter', (req, res) => {
