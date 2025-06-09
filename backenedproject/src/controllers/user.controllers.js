@@ -3,9 +3,6 @@ import {ApiError} from "../utils/ApiError.js";
 import {User} from "../models/user.models.js";
 import {uploadOnCloudinary} from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-<<<<<<< HEAD
-//steps for register
-=======
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 //A JWT is a digitally signed token that contains user data. It helps you verify who the user is without storing session data on the server.
@@ -23,7 +20,6 @@ const generateAccessAndRefreshToken = async(userId)=>{
 }
 const registerUser = asyncHandler(async (req,res)=>{
     //steps for register
->>>>>>> e525419 (access and refresh token)
 //1.get user details from frontend
 //2.validation
 //3.check if user already exists: username, email
@@ -33,11 +29,6 @@ const registerUser = asyncHandler(async (req,res)=>{
 //7remove password and refresh token field from response
 //8.check for user creation
 //9.send response to frontend  return response
-<<<<<<< HEAD
-const registerUser = asyncHandler(async (req,res)=>{
-    const {fullname,email,username,password} = req.body//1
-=======
->>>>>>> e525419 (access and refresh token)
     console.log("Body :",req.body);
     //     Body : [Object: null prototype] {
     //   fullname: 'Shivam Kumar',
@@ -74,10 +65,7 @@ const registerUser = asyncHandler(async (req,res)=>{
     // if(fullNam.trim()){
     //     throw new ApiError(404,"fullName is required");
     // }OR
-<<<<<<< HEAD
-=======
     const {fullname,email,username,password} = req.body//1
->>>>>>> e525419 (access and refresh token)
     if ([fullname,email,username,password].some((field)=>field?.trim()==="")) {//2
         throw new Error(404,"All field is required");
     }
@@ -124,10 +112,6 @@ const registerUser = asyncHandler(async (req,res)=>{
     );
 });
 
-<<<<<<< HEAD
-
-export {registerUser};
-=======
 const loginUser = asyncHandler(async (req,res)=>{
     //steps to login
 //1.get user details(email or username) from frontend
@@ -244,4 +228,3 @@ const refreshAccessToken = asyncHandler(async(req,res)=>{
     }
 });
 export {registerUser,loginUser,logoutUser,refreshAccessToken};
->>>>>>> e525419 (access and refresh token)
