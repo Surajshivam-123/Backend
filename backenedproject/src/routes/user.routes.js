@@ -1,7 +1,20 @@
 import {Router} from "express";
 import {registerUser} from "../controllers/user.controllers.js"
+import {upload} from "../middlewares/multer.middleware.js"
 const router = Router();
 
-router.route("/register").post(registerUser);
-//https://localhost:8000/users/register
-export default  router;
+router.route("/register").post(
+    upload.fields([
+        {
+            name:"avatar",
+            maxCount:1
+        },
+        {
+            name:"coverImage",
+            maxCount:1
+        }
+    ]),
+    registerUser
+);
+//https://localhost:8000/api/v1/users/register
+export default  router;//if default then we can import by any name

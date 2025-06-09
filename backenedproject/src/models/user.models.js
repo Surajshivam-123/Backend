@@ -1,7 +1,7 @@
-import mongoose,{Schema, schema} from 'mongoose'
+import mongoose,{Schema} from 'mongoose'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
-const userSchema = new schema({
+const userSchema = new Schema({
     username:{
         type:String,
         required:true,
@@ -47,10 +47,10 @@ const userSchema = new schema({
 },
 {timestamps:true});
 
-userSchema.pre("save",async function (next){//middleware
-    if(!this.isModified("password"))
+userSchema.pre("save",async function (next){//middleware for password encryption
+    if(!this.isModified("password"))//When you're storing passwords, you usually want to hash them (with bcrypt). But you should only hash it when it's newly created or changed — not every time you save the user.
         return next();
-    this.password = bcrypt.hash(this.password,10);
+    this.password = await bcrypt.hash(this.password,10);
     next();
 });
 
