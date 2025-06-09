@@ -11,7 +11,11 @@ app.get('/twitter', (req, res) => {
   res.send('surajdotcom')
 })
 
+<<<<<<< HEAD
 app.get('/login',(req, res) => {//reatart the server
+=======
+app.get('/login',(req, res) => {//restart the server
+>>>>>>> e525419 (access and refresh token)
   res.send('<h1>Login your account</h1>')
 })
 app.listen(process.env.PORT, () => {
