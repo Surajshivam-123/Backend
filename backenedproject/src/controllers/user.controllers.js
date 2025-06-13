@@ -1,9 +1,8 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {ApiError} from "../utils/ApiError.js";
 import {User} from "../models/user.models.js";
-import {uploadOnCloudinary} from "../utils/cloudinary.js";
+import {uploadOnCloudinary,deleteOnCloudinary} from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 //A JWT is a digitally signed token that contains user data. It helps you verify who the user is without storing session data on the server.
 const generateAccessAndRefreshToken = async(userId)=>{
@@ -18,6 +17,8 @@ const generateAccessAndRefreshToken = async(userId)=>{
         throw new ApiError(500,"Something went wrong while accessing refresh and access token");
     }
 }
+let coverImageResponse;
+let avatarResponse;
 const registerUser = asyncHandler(async (req,res)=>{
     console.log("Body :",req.body);
     //     Body : [Object: null prototype] {
@@ -93,11 +94,11 @@ const registerUser = asyncHandler(async (req,res)=>{
     }
     const avatar = await uploadOnCloudinary(avatarLocalPath);//5
     const coverImage = await uploadOnCloudinary(coverImageLocalPath);//5
-
+    avatarResponse=avatar;
+    coverImageResponse=coverImage;
     if(!avatar){
         throw new ApiError(404,"Avatar is required");
     }
-
     const user = await User.create({//6
         fullname,
         email,
@@ -244,14 +245,15 @@ const changeCurrentPassword = asyncHandler(async(req,res)=>{
     user.password = newPassword;
     await user.save({validateBeforeSave:false});//after this userSchema.pre(..) will be called in the user.models.js
 
-    return res.status(200)
+    return res
+    .status(200)
     .json(new ApiResponse(200,{},"Password is changed"));
 });
 
 const getUser = asyncHandler(async(req,res)=>{
     return res
     .status(200)
-    .json(req.user,"User fetched successfully");
+    .json(new ApiResponse(req.user,"User fetched successfully"));
 });
 
 const updateAccountDetails = asyncHandler(async(req,res)=>{
@@ -299,7 +301,8 @@ const updateAvatar = asyncHandler(async(req,res)=>{
     },{
         new:true
     }).select("-password");
-
+    deleteOnCloudinary(avatarResponse.public_id);
+    avatarResponse = avatar;
     return res.status(200)
     .json(
         new ApiResponse(200,user,"Image uploaded successfully")
@@ -325,13 +328,86 @@ const updateCover = asyncHandler(async(req,res)=>{
     },{
         new:true
     }).select("-password");
-
+    deleteOnCloudinary(coverImageResponse.public_id);
+    coverImageResponse = Cover;
     return res.status(200)
     .json(
         new ApiResponse(200,user,"Image uploaded successfully")
     )
     
 });
+
+const getUserCahnnelProfile = asyncHandler(async (req,res)=>{
+    try {
+        const {username} = req.params;
+        if(username?.trim()){
+            throw new ApiError(400,"Username is not found");
+        } 
+        const channel = await User.aggregate([
+            {
+                $match:{
+                    username:username.toLowerCase()
+                }
+            },
+            {
+                $lookup:{
+                    from:"subscriptions",
+                    local_field:"_id",
+                    foreignField:"channel",
+                    as:"Subscriber"
+                }
+            },
+            {
+                $lookup:{
+                    from:"subscriptions",
+                    local_field:"_id",
+                    foreignField:"subscriber",
+                    as:"Subscribed"
+                }
+            },
+            {
+                $addFields:{
+                    SubsciberCount:{
+                        $size:"$Subscriber"
+                    },
+                    SubscribedCount:{
+                        $size:"$Subscribed"
+                    },
+                    isSubscribed:{
+                        $cond:{
+                            if:{$in:[req.user?._id,"$subscribers.Subscriber"]},
+                            then:true,
+                            else:false
+                        }
+                    }
+                }
+            },
+            {
+                $project:{
+                    fullname:1,
+                    username:1,
+                    email:1,
+                    coverImage:1,
+                    avatar:1,
+                    isSubscribed:1,
+                    SubscriberCount:1,
+                    SubscribedCount:1
+                }
+            }
+        ])
+        if(!channel?.length){
+            throw new ApiError(400,"Channel not found");
+        }
+
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(200,channel[0],"User data fetched successfully")
+        )
+    } catch (error) {
+        console.log("Error",error)
+    }   
+})
 export {registerUser,
     loginUser,
     logoutUser,

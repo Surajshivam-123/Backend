@@ -1,5 +1,6 @@
 import {v2 as cloudinary} from "cloudinary"
 import fs from "fs"
+import { ApiError } from "./ApiError";
 
 cloudinary.config({
     cloud_name:process.env.CLOUDINARY_CLOUD_NAME,
@@ -16,7 +17,7 @@ const uploadOnCloudinary = async (localfilePath)=>{
             resource_type:"auto",
         });
         //file uploaded successfully
-        console.log("Response",response);
+        //console.log("Response",response);
     // Response {
     //   asset_id: 'f0914ca47177aa065d6b7a2621d52d33',
     //   public_id: 'tudnvxrl5emmhnsj3x1h',
@@ -49,4 +50,15 @@ const uploadOnCloudinary = async (localfilePath)=>{
         return null;
     }
 }
-export {uploadOnCloudinary};
+
+const deleteOnCloudinary = async(publicId)=>{
+    try {
+        if(!publicId){
+            throw new ApiError(400,"Public Id not found");
+        }
+        await cloudinary.uploader.destroy(publicId,{resource_type:'auto'});
+    } catch (error) {
+        console.log("Error",error);
+    }
+}
+export {uploadOnCloudinary,deleteOnCloudinary};
