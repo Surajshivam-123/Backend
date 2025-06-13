@@ -345,7 +345,7 @@ const getUserCahnnelProfile = asyncHandler(async (req,res)=>{
         } 
         const channel = await User.aggregate([
             {
-                $match:{
+                $match:{//entered into those documents where username is matched
                     username:username.toLowerCase()
                 }
             },
@@ -407,7 +407,65 @@ const getUserCahnnelProfile = asyncHandler(async (req,res)=>{
     } catch (error) {
         console.log("Error",error)
     }   
-})
+});
+
+const getWatchHistory = asyncHandler(async(req,res)=>{
+    try {
+        const user = await User.aggregate([
+            {
+                $match:{
+                _id:new mongoose.Types.ObjectId(req.user?._id)
+            },
+            },
+            {
+                $lookup:{
+                    from:"videos",
+                    localField:"_id",
+                    foreignField:"watchHistory",
+                    as:"watchHistory",
+                    pipeline:[
+                        {
+                            $lookup:{
+                                from:"users",
+                                localField:"owner",
+                                foreignField:"_id",
+                                as:"owner",
+                                pipeline:[
+                                    {
+                                        $project:{
+                                            fullname:1,
+                                            username:1,
+                                            email:1,
+                                            avatar:1,
+                                            coverImage:1,
+
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            $addFields:{
+                                owner:{
+                                    $first:"$owner"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ])
+        res
+        .status(200)
+        .json(
+            new ApiResponse(200,"WatchHistory fetched successfully")
+        )
+    } catch (error) {
+        console.log("Error",error);
+    }
+});
+
+
 export {registerUser,
     loginUser,
     logoutUser,
@@ -416,5 +474,7 @@ export {registerUser,
     getUser,
     updateAccountDetails,
     updateAvatar,
-    updateCover
+    updateCover,
+    getUserCahnnelProfile,
+    getWatchHistory
 };
