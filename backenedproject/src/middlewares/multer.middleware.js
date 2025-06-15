@@ -15,6 +15,14 @@ const storage = multer.diskStorage({
         cb(null,file.originalname)
     }
 }
-)
+);
+//EXPLANATION
+//🔹 multer.diskStorage({...})
+// Tells Multer to store uploaded files on disk (your server’s file system).
+// Accepts an object with two required functions: destination and filename.
 
-export const upload = multer({ storage: storage })
+export const upload = multer({ storage: storage });
+// | Code Part                   | What It Does                                          |
+// | --------------------------- | ----------------------------------------------------- |
+// | `multer({...})`             | Creates Multer upload middleware                      |
+// | `{ storage: storage }`      | Uses custom disk storage strategy (folder & filename) |

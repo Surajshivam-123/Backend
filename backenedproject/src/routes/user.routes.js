@@ -2,8 +2,10 @@ import {Router} from "express";
 import {registerUser,loginUser,logoutUser,refreshAccessToken, changeCurrentPassword,getUser,updateAccountDetails,updateAvatar,updateCover,getUserCahnnelProfile,getWatchHistory} from "../controllers/user.controllers.js"
 import {upload} from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-
+//import {app} from "../app.js";
 const router = Router();
+
+//app.use("/api/v1/users",router);//cannot be written here
 
 router.route("/register").post(
     upload.fields([

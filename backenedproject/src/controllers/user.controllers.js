@@ -4,6 +4,7 @@ import {User} from "../models/user.models.js";
 import {uploadOnCloudinary,deleteOnCloudinary} from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from 'jsonwebtoken';
+
 //A JWT is a digitally signed token that contains user data. It helps you verify who the user is without storing session data on the server.
 const generateAccessAndRefreshToken = async(userId)=>{
     try {
@@ -17,8 +18,6 @@ const generateAccessAndRefreshToken = async(userId)=>{
         throw new ApiError(500,"Something went wrong while accessing refresh and access token");
     }
 }
-let coverImageResponse;
-let avatarResponse;
 const registerUser = asyncHandler(async (req,res)=>{
     console.log("Body :",req.body);
     //     Body : [Object: null prototype] {
@@ -27,19 +26,6 @@ const registerUser = asyncHandler(async (req,res)=>{
     //   password: '12345',
     //   email: 'sj834031@'
     // }
-    // Request.file: [Object: null prototype] {
-    //   avatar: [
-    //     {
-    //       fieldname: 'avatar',
-    //       originalname: 'shivaji.jpg',
-    //       encoding: '7bit',
-    //       mimetype: 'image/jpeg',
-    //       destination: './public/temp',
-    //       filename: 'shivaji.jpg',
-    //       path: 'public/temp/shivaji.jpg',
-    //       size: 16883
-    //     }
-    //   ],
     //   coverImage: [
     //     {
     //       fieldname: 'coverImage',
@@ -71,7 +57,7 @@ const registerUser = asyncHandler(async (req,res)=>{
 
     const {fullname,email,username,password} = req.body//1
     if ([fullname,email,username,password].some((field)=>field?.trim()==="")) {//2
-        throw new Error(404,"All field is required");
+        throw new ApiError(404,"All field is required");
     }
     const existingUser = await User.findOne({
         $or:[{email},{username}]
@@ -80,7 +66,19 @@ const registerUser = asyncHandler(async (req,res)=>{
         throw new ApiError(404,"User already exists with this email or username");//3
     }
     console.log("Request.file:",req.files);
-
+    // Request.file: [Object: null prototype] {
+    //   avatar: [
+    //     {
+    //       fieldname: 'avatar',
+    //       originalname: 'shivaji.jpg',
+    //       encoding: '7bit',
+    //       mimetype: 'image/jpeg',
+    //       destination: './public/temp',
+    //       filename: 'shivaji.jpg',
+    //       path: 'public/temp/shivaji.jpg',
+    //       size: 16883
+    //     }
+    //   ],
 
     const avatarLocalPath = req.files?.avatar[0]?.path;//4
 
@@ -94,8 +92,7 @@ const registerUser = asyncHandler(async (req,res)=>{
     }
     const avatar = await uploadOnCloudinary(avatarLocalPath);//5
     const coverImage = await uploadOnCloudinary(coverImageLocalPath);//5
-    avatarResponse=avatar;
-    coverImageResponse=coverImage;
+
     if(!avatar){
         throw new ApiError(404,"Avatar is required");
     }
@@ -104,8 +101,14 @@ const registerUser = asyncHandler(async (req,res)=>{
         email,
         username:username.toLowerCase(),
         password,
-        avatar:avatar.url,
-        coverImage:coverImage?.url || "",
+        avatar:{
+            url:avatar.url,
+            public_id:avatar.public_id
+        },
+        coverImage:{
+            url:coverImage?.url || "",
+            public_id:coverImage?.public_id || ""
+        }
     })
     const createdUser = await User.findById(user._id).select( "-password -refreshToken")//7
 
@@ -133,12 +136,18 @@ try {
     }
     const findUser = await User.findOne({//2
         $or:[{email},{username}]
-    });
+    }).select("-password -refreshToken");
+    
     
     if(!findUser){
         throw new ApiError(404,"User Not Found");   
     }
-    const isValidPassword = User.isPasswordCorrect(password,findUser.password);//3 and 4
+    if (req.cookies) {
+        return res
+        .status(200)
+        .json(new ApiResponse(200, findUser, "User already logged in one device."));
+    }
+    const isValidPassword =await findUser.isPasswordCorrect(password);//3 and 4
    if(!isValidPassword){
         throw new ApiError(401,"Invalid Password");
    }
@@ -171,8 +180,8 @@ const logoutUser = asyncHandler(async(req,res)=>{
     //3.send response to frontend
     try {
        await User.findByIdAndUpdate(req.user._id,{
-        $set:{
-            refreshToken:null
+        $unset:{
+            refreshToken:1
         }
     }//1
     ,
@@ -236,7 +245,7 @@ const refreshAccessToken = asyncHandler(async(req,res)=>{
 const changeCurrentPassword = asyncHandler(async(req,res)=>{
     const {oldPassword,newPassword,confPassword}=req.body;
     const user = await User.findById(req.user?._id);//user in argument comes from verifyJWT middleware
-    if(!(await isPasswordCorrect(oldPassword,user.password))){
+    if(!(await user.isPasswordCorrect(oldPassword))){
         throw new ApiError(401,"Incorrect old password");
     }
     if(newPassword !== confPassword){
@@ -253,7 +262,7 @@ const changeCurrentPassword = asyncHandler(async(req,res)=>{
 const getUser = asyncHandler(async(req,res)=>{
     return res
     .status(200)
-    .json(new ApiResponse(req.user,"User fetched successfully"));
+    .json(new ApiResponse(200,req.user,"User fetched successfully"));
 });
 
 const updateAccountDetails = asyncHandler(async(req,res)=>{
@@ -290,19 +299,23 @@ const updateAvatar = asyncHandler(async(req,res)=>{
     if(!avatarLocalPath){
         throw new ApiError(400,"Image is not uploaded");
     }
+    deleteOnCloudinary(req.user?.avatar.public_id);
     const avatar = await uploadOnCloudinary(avatarLocalPath);
-    if(avatar.url){
+    console.log("Avatar:",avatar);
+    if(!avatar.url){
         throw new ApiError(400,"Error while uploading image");
     }
-    const user = User.findByIdAndUpdate(req.user?._id,{
+    const user =await User.findByIdAndUpdate(req.user?._id,{
         $set:{
-            avatar:avatar.url
+            avatar:{
+                url:avatar.url,
+                public_id:avatar.public_id
+            }
         }
     },{
         new:true
     }).select("-password");
-    deleteOnCloudinary(avatarResponse.public_id);
-    avatarResponse = avatar;
+    
     return res.status(200)
     .json(
         new ApiResponse(200,user,"Image uploaded successfully")
@@ -317,19 +330,23 @@ const updateCover = asyncHandler(async(req,res)=>{
     if(!CoverLocalPath){
         throw new ApiError(400,"Image is not uploaded");
     }
+
+    deleteOnCloudinary(req.user?.coverImage.public_id);
     const Cover = await uploadOnCloudinary(CoverLocalPath);
-    if(Cover.url){
-        throw new ApiError(400,"Error while uploading image");
+    //console.log("Cover",Cover);
+    if(!Cover){
+        throw new ApiError(400,"error while uploading image");
     }
-    const user = User.findByIdAndUpdate(req.user?._id,{
+    const user = await User.findByIdAndUpdate(req.user?._id,{
         $set:{
-           coverImage:Cover.url
+           coverImage:{
+            url:Cover.url,
+            public_id:Cover.public_id
+        }
         }
     },{
         new:true
     }).select("-password");
-    deleteOnCloudinary(coverImageResponse.public_id);
-    coverImageResponse = Cover;
     return res.status(200)
     .json(
         new ApiResponse(200,user,"Image uploaded successfully")
@@ -340,7 +357,7 @@ const updateCover = asyncHandler(async(req,res)=>{
 const getUserCahnnelProfile = asyncHandler(async (req,res)=>{
     try {
         const {username} = req.params;
-        if(username?.trim()){
+        if(!username?.trim()){
             throw new ApiError(400,"Username is not found");
         } 
         const channel = await User.aggregate([

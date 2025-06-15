@@ -24,12 +24,12 @@ const userSchema = new Schema({
         index:true,
     },
     avatar:{
-        type:String,//clodenary sevice
-        required:true,
-
+        url:String,
+        public_id:String
     },
     coverImage :{
-        type:String,
+        url:String,
+        public_id:String
     },
     watchHistory:[
         {
@@ -51,6 +51,9 @@ userSchema.pre("save",async function (next){//middleware for password encryption
     if(!this.isModified("password"))//When you're storing passwords, you usually want to hash them (with bcrypt). But you should only hash it when it's newly created or changed — not every time you save the user.
         return next();
     this.password = await bcrypt.hash(this.password,10);
+    // The 10 is called the salt rounds (also known as cost factor).It tells bcrypt how many times to process the data when generating the hash.
+    //Higher number = more secure, but slower and Lower number = faster, but easier to brute-force
+
     next();
 });
 
@@ -76,7 +79,7 @@ userSchema.methods.generateAccessToken = function(){
         expiresIn:process.env.ACCESS_TOKEN_EXPIRY
     }
 )
-}
+};
 
 // 🔄 Refresh Token
 // What it is: A long-lived token used to get a new access token when the old one expires.

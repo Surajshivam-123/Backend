@@ -14,7 +14,7 @@ const videoSchema=new Schema({
         type:String,
         required:true,
     },
-    desciption:{
+    description:{
         type:String,
         required:true,
     },
@@ -33,6 +33,10 @@ const videoSchema=new Schema({
     owner:{
         type:Schema.Types.ObjectId,
         ref:"User"
+    },
+    access:{
+        type:String,
+        required:true
     }
 },{timestamps:true})
 
