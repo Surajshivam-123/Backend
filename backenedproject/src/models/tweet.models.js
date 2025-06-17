@@ -8,6 +8,16 @@ const tweetSchema = new Schema({
     content:{
         type:String,
         required:true
+    },
+    photo:{
+        url:{
+            type:String,
+            default:""
+        },
+        public_id:{
+            type:String,
+            default:""
+        }
     }
 },{timestmaps:true});
 

@@ -33,7 +33,13 @@ app.get('/profile', (req, res) => {
 //use of router
 import {userRouter} from './routes/user.routes.js';
 import {videoRouter} from './routes/video.routes.js';
+import {subscriptionRouter} from './routes/subscription.route.js';
+import {tweetRouter} from './routes/tweet.routes.js';
+
 app.use("/api/v1/users",userRouter);
 app.use("/api/v1/videos",videoRouter);
+app.use("/spi/v1/subscription",subscriptionRouter);
+app.use("/api/v1/tweets",tweetRouter);
+
 
 export {app};
