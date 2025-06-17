@@ -109,8 +109,9 @@ const registerUser = asyncHandler(async (req,res)=>{
             url:coverImage?.url || "",
             public_id:coverImage?.public_id || ""
         }
-    })
-    const createdUser = await User.findById(user._id).select( "-password -refreshToken")//7
+    });
+
+    const createdUser = await User.findById(user._id).select( "-refreshToken")//7
 
     if(!createdUser){//8
     throw new ApiError(500,"Something went wrong while regisering the user");
@@ -136,17 +137,17 @@ try {
     }
     const findUser = await User.findOne({//2
         $or:[{email},{username}]
-    }).select("-password -refreshToken");
+    });
     
     
     if(!findUser){
         throw new ApiError(404,"User Not Found");   
     }
-    if (req.cookies) {
-        return res
-        .status(200)
-        .json(new ApiResponse(200, findUser, "User already logged in one device."));
-    }
+    // if (req.cookies) {
+    //     return res
+    //     .status(200)
+    //     .json(new ApiResponse(200, findUser, "User already logged in one device."));
+    // }
     const isValidPassword =await findUser.isPasswordCorrect(password);//3 and 4
    if(!isValidPassword){
         throw new ApiError(401,"Invalid Password");
@@ -154,6 +155,11 @@ try {
 
    const {accessToken,refreshToken} = await generateAccessAndRefreshToken(findUser._id);//5
    //6
+   if(!(accessToken || refreshToken)){
+    throw new ApiError(500,"Something went wrong while generating tokens");
+   }
+   console.log("AccessToken:",accessToken);
+   console.log("RefreshToken:",refreshToken);
    const loggedInUser = await User.findById(findUser._id).select("-password -refreshToken")
    const options = {
     httpOnly: true,//only server can access this cookie
@@ -208,6 +214,7 @@ const logoutUser = asyncHandler(async(req,res)=>{
 
 const refreshAccessToken = asyncHandler(async(req,res)=>{
     try {
+        console.log("cookies:",req.cookies);
         const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
         if(!incomingRefreshToken){
             throw new ApiError(401,"Unauthorised request");
@@ -238,7 +245,7 @@ const refreshAccessToken = asyncHandler(async(req,res)=>{
             new ApiResponse(201,{accessToken,refreshToken},"Access Token refreshed!")
         )
     } catch (error) {
-        throw new ApiError(500,"Error while refreshing access token");
+        console.log("Error",error);
     }
 });
 
@@ -359,7 +366,7 @@ const getUserCahnnelProfile = asyncHandler(async (req,res)=>{
         const {username} = req.params;
         if(!username?.trim()){
             throw new ApiError(400,"Username is not found");
-        } 
+        }
         const channel = await User.aggregate([
             {
                 $match:{//entered into those documents where username is matched
@@ -475,7 +482,7 @@ const getWatchHistory = asyncHandler(async(req,res)=>{
         res
         .status(200)
         .json(
-            new ApiResponse(200,"WatchHistory fetched successfully")
+            new ApiResponse(200,user,"WatchHistory fetched successfully")
         )
     } catch (error) {
         console.log("Error",error);
