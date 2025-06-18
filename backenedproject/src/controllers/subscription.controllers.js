@@ -1,6 +1,8 @@
 import { Subscription } from "../models/subscription.models.js";
 import { ApiError } from "../utils/ApiError.js";
-import {ApiRespnse, ApiResponse} from "../utils/ApiResponse.js"
+import {ApiResponse} from "../utils/ApiResponse.js"
+import { asyncHandler } from "../utils/asyncHandler.js";
+
 const toggleSubscription = asyncHandler(async (req, res) => {
     try {
         const {channelId} = req.params;
@@ -25,7 +27,7 @@ const toggleSubscription = asyncHandler(async (req, res) => {
             channel:channelId
         });
         return res.status(200).json(
-            new ApiRespnse(200,newSubscription,"Subscribed successfully")
+            new ApiResponse(200,newSubscription,"Subscribed successfully")
         );
     } catch (error) {
         console.log("Error:",error);
@@ -72,7 +74,7 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
         return res
         .status(200)
         .json(
-            new ApiRespnse(200,channels,"Channel list fetched successfully")
+            new ApiResponse(200,channels,"Channel list fetched successfully")
         );
     } catch (error) {
         console.log("Error",error);

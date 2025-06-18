@@ -158,8 +158,6 @@ try {
    if(!(accessToken || refreshToken)){
     throw new ApiError(500,"Something went wrong while generating tokens");
    }
-   console.log("AccessToken:",accessToken);
-   console.log("RefreshToken:",refreshToken);
    const loggedInUser = await User.findById(findUser._id).select("-password -refreshToken")
    const options = {
     httpOnly: true,//only server can access this cookie
