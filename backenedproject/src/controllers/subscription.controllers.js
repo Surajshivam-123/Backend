@@ -17,9 +17,9 @@ const toggleSubscription = asyncHandler(async (req, res) => {
             channel: channelId
         });
         if(existingChannel){
-            const sub = await Subscription.findByIdAndDelete(channelId);
+            const sub = await Subscription.findByIdAndDelete(existingChannel._id);
             return res.status(200).json(
-                new ApiRespnse(200,sub,"Unsubscribed successfully")
+                new ApiResponse(200,sub,"Unsubscribed successfully")
             );
         }
         const newSubscription = await Subscription.create({
@@ -38,14 +38,12 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 // controller to return subscriber list of a channel
 const getUserChannelSubscribers = asyncHandler(async (req, res) => {
     try {
-        const {channelId} = req.params;
-        if(!channelId){
-            throw new ApiError(200,"ChannelId not found");
+        const {subscriberId} = req.params;
+        if(!subscriberId){
+            throw new ApiError(200,"subscriberId not found");
         }
         const subscriber = await Subscription.find({
-            $match:{
-                channel:channelId
-            }
+                channel:subscriberId
         });
         return res
         .status(200)
@@ -61,14 +59,12 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 // controller to return channel list to which user has subscribed
 const getSubscribedChannels = asyncHandler(async (req, res) => {
     try {
-        const { subscriberId } = req.params;
-        if (!subscriberId) {
-            throw new ApiError(200, "SubscriberId not found");
+        const { channelId } = req.params;
+        if (!channelId) {
+            throw new ApiError(200, "channelId not found");
         }
         const channels = await Subscription.find({
-            $match:{
-                subscriber:subscriberId
-            }
+                subscriber:channelId
         });
     
         return res

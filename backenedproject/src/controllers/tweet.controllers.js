@@ -16,8 +16,8 @@ const createTweet = asyncHandler(async (req, res) => {
             owner:req.user?._id,
             content,
             photo:{
-                url:photo.url,
-                public_id:photo.public_id
+                url:photo?.url,
+                public_id:photo?._id
             }
         });
         if(!tweet){
@@ -35,7 +35,11 @@ const createTweet = asyncHandler(async (req, res) => {
 
 const getUserTweets = asyncHandler(async (req, res) => {
    try {
-     const tweets = await Tweet.find({owner:req.user?._id}).sort({createdAt:-1});
+     const tweets = await Tweet.find(
+        {
+        owner:req.user?._id
+        }
+        ).sort({createdAt:-1});
      if(!tweets){
          throw new ApiError(400,"User tweets not fetched");
      }
@@ -52,7 +56,7 @@ const updateTweet = asyncHandler(async (req, res) => {
         if(!content){
             throw new ApiError(400,"Content is required");
         }
-        const tweetId = req.params?._id;
+        const tweetId = req.params?.tweetId;
         if(!tweetId){
             throw new ApiError(400,"Tweet id is required");
         }
@@ -72,7 +76,7 @@ const updateTweet = asyncHandler(async (req, res) => {
 
 const deleteTweet = asyncHandler(async (req, res) => {
     try {
-        const tweetId = req.params?._id;
+        const tweetId = req.params?.tweetId;
         if(!tweetId){
             throw new ApiError(400,"Tweet id is required");
         }

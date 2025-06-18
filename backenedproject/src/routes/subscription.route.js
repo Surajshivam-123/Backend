@@ -11,7 +11,7 @@ subscriptionRouter.route("/c/:channelId")
 .patch(toggleSubscription)
 .get(getSubscribedChannels)
 
-subscriptionRouter.route("/c/:subscriberId").get(getUserChannelSubscribers);
+subscriptionRouter.route("/s/:subscriberId").get(getUserChannelSubscribers);
 
 export {subscriptionRouter};
 
