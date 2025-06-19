@@ -1,6 +1,10 @@
 import mongoose,{Schema} from "mongoose";
 
 const likeSchema = new Schema({
+    owner:{
+        type: Schema.Types.ObjectId,
+        ref:"User"
+    },
     comment:{
         type:Schema.Types.ObjectId,
         ref:"Comment"

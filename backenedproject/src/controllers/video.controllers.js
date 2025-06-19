@@ -164,6 +164,8 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     return res.status(200)
     .json(new ApiResponse(200,video,"Toggled public status successfully."));
 });
+
+
 export {
     publishVideo,
     getAllVideos,

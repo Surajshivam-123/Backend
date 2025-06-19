@@ -2,6 +2,7 @@ import {Like} from '../models/like.models.js'
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js'
+import {Video} from "../models/video.models.js"
 
 const toggleVideoLike = asyncHandler(async (req, res) => {
     try {
@@ -9,6 +10,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         if(!videoId){
             throw new ApiError(400,"VideoId is required");
         }
+        const video = await Video.findById(videoId).populate("owner");
         const liked = await Like.findOne({
             likedby:req.user?._id,
             video:videoId
@@ -18,6 +20,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
             return res.status(200).json(new ApiResponse(200,liked,"Like removed on video"));
         }
         const like = await Like.create({
+            owner:video.owner._id,
             likedby:req.user?._id,
             video:videoId
         });
